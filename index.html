@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Game Store</title>
+  <style>
+    :root{
+      --bg-light:#f5f6fa; --bg-dark:#121212;
+      --text-light:#222; --text-dark:#eee;
+      --card-light:#fff; --card-dark:#1f1f1f;
+      --accent:#4f46e5; --shadow: rgba(2,6,23,0.12);
+      --radius:12px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;font-family:Inter,system-ui,-apple-system,Roboto,"Segoe UI",Arial;
+      background:var(--bg-light);color:var(--text-light);
+      transition:background .22s, color .22s;
+    }
+    body.dark{ background:var(--bg-dark); color:var(--text-dark); }
+
+    header{
+      position:sticky;top:0;z-index:1200;
+      display:flex;align-items:center;justify-content:space-between;
+      gap:12px;padding:14px 18px;background:var(--accent);color:#fff;
+      box-shadow:0 6px 18px var(--shadow);
+    }
+    .brand{font-weight:700;font-size:18px}
+    /*.hamburger{
+      background:none;border:0;color:white;font-size:26px;cursor:pointer;padding:6px 8px;border-radius:8px;
+    }*/
+    
+    .hamburger {
+      width: 32px;
+      height: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      z-index: 1201; /* biar di atas overlay */
+    }
+    
+    .hamburger span {
+      display: block;
+      height: 4px;
+      background: #fff; /* default garis putih */
+      border-radius: 2px;
+      transition: all 0.3s ease;
+    }
+    
+    /* mode dark → garis ikut warna text */
+    body.dark .hamburger span {
+      background: var(--text-dark);
+    }
+    
+    /* animasi berubah jadi X saat aktif */
+    .hamburger.active span:nth-child(1) {
+      transform: rotate(45deg) translateY(9px);
+    }
+    .hamburger.active span:nth-child(2) {
+      opacity: 0;
+    }
+    .hamburger.active span:nth-child(3) {
+      transform: rotate(-45deg) translateY(-9px);
+    }
+
+    main{max-width:1100px;margin:0 auto;padding:80px 20px 40px;min-height:60vh}
+
+    h1{margin:0 0 6px}
+    p.lead{margin:0 0 16px;color:rgba(0,0,0,0.55)}
+    body.dark p.lead{ color:rgba(255,255,255,0.75) }
+
+    .search {
+      width:100%;padding:12px 14px;border-radius:10px;border:1px solid rgba(0,0,0,0.08);
+      margin-bottom:20px;font-size:15px;background:transparent;
+    }
+
+    /* games grid */
+    .games-grid{
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;
+    }
+
+    .card{
+      background:var(--card-light);border-radius:var(--radius);overflow:hidden;
+      box-shadow:0 8px 24px var(--shadow);padding:14px;display:flex;flex-direction:column;gap:12px;
+      transition:transform .18s ease, box-shadow .18s ease;
+    }
+    body.dark .card{ background:var(--card-dark) }
+
+    .card:hover{ transform:translateY(-6px); box-shadow:0 20px 36px rgba(2,6,23,0.18) }
+
+    .card .icon-wrap{ width:80px;height:80px;border-radius:12px;overflow:hidden;flex-shrink:0 }
+    .card img.icon{ width:100%;height:100%;object-fit:cover;display:block }
+
+    .card .title{ font-weight:700;font-size:16px;margin-bottom:4px }
+    .card .meta{ font-size:13px;color:rgba(0,0,0,0.6) }
+    body.dark .card .meta{ color:rgba(255,255,255,0.75) }
+    .card .desc{ font-size:14px;line-height:1.45;color:inherit }
+
+    .card .actions{ display:flex;align-items:center;gap:8px;margin-top:6px }
+    .btn-download{
+      padding:10px 18px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#6d28d9);
+      color:#fff;text-decoration:none;font-weight:700;box-shadow:0 6px 12px rgba(79,70,229,0.12);
+      transition:transform .12s;
+      display:inline-block;
+    }
+    .btn-download:active{ transform:scale(.99) }
+
+    /* sidebar */
+    .overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,0.42);display:none;z-index: 1100;
+    }
+    .overlay.active{ display:block }
+
+    .sidebar{
+      position:fixed;top:57px;right:0;height: calc(100% - 60px);width:300px;
+      transform:translateX(110%);background:var(--card-light);box-shadow:-12px 0 28px rgba(0,0,0,.18);
+      padding:28px 18px;z-index:1150;border-radius:12px 0 0 12px;
+      transition:transform .28s cubic-bezier(.2,.9,.2,1);
+      display:flex;flex-direction:column;gap:12px;
+    }
+    body.dark .sidebar{ background:var(--card-dark) }
+    .sidebar.active{ transform:translateX(0) }
+
+    .nav-item{ display:block;padding:8px 6px;text-decoration:none;color:inherit;font-weight:700;border-radius:8px; cursor:pointer }
+    .nav-item:hover{ background: rgba(79,70,229,0.06) }
+
+    .sidebar .small-btn{ width:100%;padding:10px;border-radius:8px;border:0;cursor:pointer;font-weight:700 }
+    .sidebar .btn-theme{ background:linear-gradient(135deg,#4f46e5,#6d28d9); color:#fff; }
+    .sidebar .btn-lang{ background:linear-gradient(135deg,#4f46e5,#6d28d9); color:#fff; }
+
+    footer{ margin-top:28px;padding:20px;background:var(--accent);color:#fff;text-align:center }
+
+    /* Untuk teks di dalam input pencarian */
+    body.dark input[type="text"],
+    body.dark input[type="search"],
+    body.dark .search-box {
+      color: #fff !important;          /* teks input putih */
+      background-color: #333 !important; /* latar input lebih gelap */
+      border: 1px solid #555;          /* biar kontras */
+    }
+    
+    /* Untuk placeholder (teks abu-abu sebelum user ketik) */
+    body.dark input[type="text"]::placeholder,
+    body.dark input[type="search"]::placeholder,
+    body.dark .search-box::placeholder {
+      color: #aaa !important;
+    }
+
+    /* responsive small */
+    @media (max-width:440px){
+      .sidebar{ width:100%; padding-top:36px; border-radius:0 }
+      .games-grid{ grid-template-columns: 1fr }
+      main{ padding-top:76px }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand" data-i18n="logo">Game Store</div>
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </header>
+
+  <div class="overlay" aria-hidden="true"></div>
+
+  <aside class="sidebar" role="dialog" aria-label="Main menu" aria-hidden="true">
+    <div style="font-weight:800;font-size:18px;margin-bottom:6px" data-i18n="menu_title">Menu</div>
+    <a class="nav-item" data-page="home" data-i18n="nav_home">Home</a>
+    <a class="nav-item" data-page="about" data-i18n="nav_about">About</a>
+    <a class="nav-item" data-page="contact" data-i18n="nav_contact">Contact</a>
+
+    <hr style="border:none;border-top:1px solid rgba(0,0,0,0.05);margin:12px 0">
+
+    <button class="small-btn btn-theme" id="btnTheme">🌙 Toggle Theme</button>
+    <button class="small-btn btn-lang" id="btnLang">🇺🇸 English</button>
+  </aside>
+
+  <main>
+    <section id="home" aria-labelledby="homeTitle">
+      <h1 id="homeTitle" data-i18n="home_title">Welcome to Game Store</h1>
+      <p class="lead" data-i18n="home_sub">Download lightweight games with a modern look.</p>
+
+      <input id="search" class="search" type="search" placeholder="Search games..." aria-label="Search games">
+
+      <div class="games-grid" id="gamesGrid" aria-live="polite"></div>
+    </section>
+
+    <section id="about" hidden>
+      <h1 data-i18n="about_title">About</h1>
+      <p data-i18n="about_text">This is a simple store demo built with HTML, CSS and JS.</p>
+    </section>
+
+    <section id="contact" hidden>
+      <h1 data-i18n="contact_title">Contact</h1>
+      <p data-i18n="contact_text">Contact us via email: example@email.com</p>
+    </section>
+  </main>
+
+  <footer>
+    <span data-i18n="footer_text">© 2025 Game Store</span>
+  </footer>
+
+  <script>
+  /* ---------- Data (games with i18n) ---------- */
+  const games = [
+    { id:'g1',
+      title:{ en:'Sky Runner', id:'Sky Runner' },
+      desc:{ en:'Endless running game with neon graphics.', id:'Game lari tanpa akhir dengan grafik neon.' },
+      size:'120 MB', genre:'Endless Runner',
+      img:'https://picsum.photos/400/300?1',
+      link:'#'
+    },
+    { id:'g2',
+      title:{ en:'Mystic Quest', id:'Mystic Quest' },
+      desc:{ en:'Pixel art RPG with an epic story.', id:'RPG pixel art dengan cerita seru.' },
+      size:'250 MB', genre:'RPG',
+      img:'https://picsum.photos/400/300?2',
+      link:'#'
+    },
+    { id:'g3',
+      title:{ en:'Puzzle Beam', id:'Puzzle Beam' },
+      desc:{ en:'Relaxing puzzle game with calm music.', id:'Puzzle santai dengan musik menenangkan.' },
+      size:'90 MB', genre:'Puzzle',
+      img:'https://picsum.photos/400/300?3',
+      link:'#'
+    },
+    { id:'g4',
+      title:{ en:'Battle Arena', id:'Arena Pertempuran' },
+      desc:{ en:'Multiplayer battle game with various heroes.', id:'Game pertempuran multipemain dengan berbagai hero.' },
+      size:'500 MB', genre:'Action',
+      img:'https://picsum.photos/400/300?4', // ganti link gambar sesuai icon game
+      link:'https://contoh-link-download.com/battlearena' // ganti dengan link download asli
+    },
+  ];
+
+  /* ---------- Translations ---------- */
+  const i18n = {
+    en:{
+      logo:'Game Store', menu_title:'Menu',
+      nav_home:'Home', nav_about:'About', nav_contact:'Contact',
+      home_title:'Welcome to Game Store', home_sub:'Download lightweight games with a modern look.',
+      about_title:'About', about_text:'This is a simple store demo built with HTML, CSS and JS.',
+      contact_title:'Contact', contact_text:'Contact us via email: example@email.com',
+      search_placeholder:'Search games...', download:'Download', footer_text:'© 2025 Game Store'
+    },
+    id:{
+      logo:'Toko Game', menu_title:'Menu',
+      nav_home:'Beranda', nav_about:'Tentang', nav_contact:'Kontak',
+      home_title:'Selamat Datang di Toko Game', home_sub:'Download game ringan dengan tampilan modern.',
+      about_title:'Tentang', about_text:'Website ini adalah contoh toko sederhana dibuat dengan HTML/CSS/JS.',
+      contact_title:'Kontak', contact_text:'Hubungi kami lewat email: example@email.com',
+      search_placeholder:'Cari game...', download:'Unduh', footer_text:'© 2025 Toko Game'
+    }
+  };
+
+  /* ---------- State and elements ---------- */
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.querySelector('.overlay');
+  const hamburger = document.querySelector('.hamburger');
+  const navItems = Array.from(document.querySelectorAll('.nav-item'));
+  const btnTheme = document.getElementById('btnTheme');
+  const btnLang = document.getElementById('btnLang');
+  const gamesGrid = document.getElementById('gamesGrid');
+  const searchInput = document.getElementById('search');
+
+  let lang = localStorage.getItem('lang') || 'en';
+  let theme = localStorage.getItem('theme') || 'light';
+
+  /* ---------- Utility ---------- */
+  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;') }
+
+  /* ---------- Sidebar open/close ---------- */
+  function openSidebar(){
+    sidebar.classList.add('active');
+    overlay.classList.add('active');
+    sidebar.setAttribute('aria-hidden','false');
+    overlay.setAttribute('aria-hidden','false');
+  }
+  function closeSidebar(){
+    sidebar.classList.remove('active');
+    overlay.classList.remove('active');
+    sidebar.setAttribute('aria-hidden','true');
+    overlay.setAttribute('aria-hidden','true');
+  }
+  
+  hamburger.addEventListener('click', () => {
+    if (sidebar.classList.contains('active')) {
+      closeSidebar();
+      hamburger.classList.remove('active');
+    } else {
+      openSidebar();
+      hamburger.classList.add('active');
+    }
+  });
+  
+  overlay.addEventListener('click', () => {
+    closeSidebar();
+    hamburger.classList.remove('active');
+  });
+  
+  window.addEventListener('keydown', e => {
+    if(e.key === 'Escape'){
+      closeSidebar();
+      hamburger.classList.remove('active');
+    }
+  });
+  
+  overlay.addEventListener('click', () => {
+    closeSidebar();
+    hamburger.classList.remove('active');
+  });
+  
+  window.addEventListener('keydown', e => {
+    if(e.key === 'Escape'){
+      closeSidebar();
+      hamburger.classList.remove('active');
+    }
+  });
+
+  // close if ESC pressed
+  window.addEventListener('keydown', e => { if(e.key === 'Escape'){ closeSidebar() } });
+
+  /* ---------- Navigation (works & closes sidebar) ---------- */
+  navItems.forEach(a => {
+    a.addEventListener('click', (ev)=>{
+      const page = a.dataset.page || 'home';
+      showPage(page);
+      // update hash (so back/forward status)
+      location.hash = '#' + page;
+      closeSidebar();
+    });
+  });
+
+  /* ---------- showPage with proper hide/show --- no broken CSS --- */
+  function showPage(page){
+    const sections = document.querySelectorAll('main section');
+    sections.forEach(s=>{
+      if(s.id === page){
+        s.hidden = false;
+        s.classList.add('active');
+      } else {
+        s.hidden = true;
+        s.classList.remove('active');
+      }
+    });
+    // when showing home re-render (to refresh translations)
+    if(page === 'home') renderGames(searchInput.value || '');
+    // scroll to top of main area
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // respond to hash changes
+  window.addEventListener('hashchange', ()=> {
+    const h = (location.hash || '#home').replace('#','') || 'home';
+    if(document.getElementById(h)) showPage(h);
+  });
+
+  /* ---------- theme and language ---------- */
+  function applyTheme(t){
+    theme = t;
+    if(t === 'dark') document.body.classList.add('dark'); else document.body.classList.remove('dark');
+    btnTheme.textContent = t === 'dark' ? '☀️ Light' : '🌙 Dark';
+    localStorage.setItem('theme', t);
+  }
+  btnTheme.addEventListener('click', ()=> applyTheme(document.body.classList.contains('dark') ? 'light' : 'dark') );
+
+  function applyLang(l){
+    lang = l;
+    // static translations
+    document.querySelectorAll('[data-i18n]').forEach(el=>{
+      const key = el.getAttribute('data-i18n');
+      if(i18n[l][key]) el.textContent = i18n[l][key];
+    });
+    searchInput.placeholder = i18n[l].search_placeholder;
+    btnLang.textContent = l === 'en' ? '🇺🇸 English' : '🇮🇩 Bahasa';
+    localStorage.setItem('lang', l);
+    // update cards
+    renderGames(searchInput.value || '');
+  }
+  btnLang.addEventListener('click', ()=> applyLang(lang === 'en' ? 'id' : 'en') );
+
+  /* ---------- render games (i18n) ---------- */
+  function renderGames(filter=''){
+    const q = (filter||'').trim().toLowerCase();
+    gamesGrid.innerHTML = '';
+    const filtered = games.filter(g=>{
+      const title = (g.title[lang]||'').toLowerCase();
+      const desc = (g.desc[lang]||'').toLowerCase();
+      const meta = ((g.size||'') + ' ' + (g.genre||'')).toLowerCase();
+      return !q || title.includes(q) || desc.includes(q) || meta.includes(q);
+    });
+    if(filtered.length === 0){
+      const p = document.createElement('div');
+      p.textContent = i18n[lang].no_games || (lang==='id' ? 'Game tidak ditemukan.' : 'No games found.');
+      gamesGrid.appendChild(p);
+      return;
+    }
+    filtered.forEach(g => {
+      const card = document.createElement('article');
+      card.className = 'card';
+      card.innerHTML = `
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div class="icon-wrap" style="width:80px;height:80px;border-radius:12px;overflow:hidden;flex-shrink:0">
+            <img class="icon" src="${escapeHtml(g.img)}" alt="${escapeHtml(g.title[lang]||'')}" style="width:100%;height:100%;object-fit:cover" />
+          </div>
+          <div style="flex:1">
+            <div class="title">${escapeHtml(g.title[lang]||'')}</div>
+            <div class="meta">${escapeHtml(g.size)} • ${escapeHtml(g.genre)}</div>
+          </div>
+        </div>
+        <div class="desc" style="margin-top:8px">${escapeHtml(g.desc[lang]||'')}</div>
+        <div class="actions">
+          <a class="btn-download" href="${escapeHtml(g.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(i18n[lang].download)}</a>
+        </div>
+      `;
+      gamesGrid.appendChild(card);
+    });
+  }
+
+  /* ---------- search handler ---------- */
+  searchInput.addEventListener('input', e => renderGames(e.target.value) );
+
+  /* ---------- initial state ---------- */
+  // apply saved theme & lang
+  applyTheme(localStorage.getItem('theme') || theme);
+  applyLang(localStorage.getItem('lang') || lang);
+
+  // show initial page from hash
+  const initial = (location.hash || '#home').replace('#','') || 'home';
+  if(document.getElementById(initial)) showPage(initial); else showPage('home');
+
+  </script>
+</body>
+</html>
